@@ -185,3 +185,16 @@ if __name__ == "__main__":
         else:
             print(f"[子系统] 否决: {msg}")
     print("[子系统] 周期结束")
+class DefenseEvolver:
+    """防御规则进化体 — 受宪法约束的子模块"""
+    
+    def evolve(self):
+        # ... 遗传算法进化防御规则 ...
+        best_rules = self.run_evolution()
+        
+        # 写入附加系统（和其他提案走同一通道）
+        with open('sandbox_defense.py', 'w') as f:
+            f.write(self.format_rules(best_rules))
+        
+        # 提交审查（不能在沙盒外执行任何规则）
+        return best_rules
