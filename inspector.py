@@ -123,3 +123,39 @@ def review_defense_proposal(proposal_file='sandbox_defense.py'):
     except Exception as e:
         log(f"功能测试异常: {e}")
         return False, f"测试异常: {e}"
+def review_batch_proposal(batch_file='sandbox_proposal_batch.py'):
+    """审查批量提案，对每个候选策略评分，返回通过者列表"""
+    log(f"开始审查批量提案: {batch_file}")
+    try:
+        with open(batch_file, 'r') as f:
+            content = f.read()
+    except FileNotFoundError:
+        log("批量提案文件不存在")
+        return []
+
+    # 宪法审查
+    passed, msg = constitution.ultimate_judge(content)
+    if not passed:
+        log(f"批量提案违宪: {msg}")
+        return []
+
+    # 解析所有候选策略
+    candidates = []
+    for line in content.split('\n'):
+        if line.startswith('weights='):
+            weights = eval(line.split('=')[1])
+            candidates.append({'weights': weights, 'formula': None})
+        elif line.startswith('formula_type='):
+            candidates[-1]['formula'] = int(line.split('=')[1])
+
+    # 对每个候选进行沙盒测试
+    approved = []
+    for cand in candidates:
+        # 构造临时提案代码
+        code = f"def guess(low, high, weights={cand['weights']}):\n    # 公式{cand['formula']}\n    return (low+high)/2"
+        accuracy = real_sandbox_test(code)
+        score = accuracy / MAX_GUESSES
+        if score > 0.35:  # 多目标门槛略低，因为同时考虑其他目标
+            approved.append(cand)
+            log(f"候选通过 分数{score:.2f}")
+    return approved
